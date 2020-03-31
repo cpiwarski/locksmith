@@ -4,19 +4,18 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"regexp"
 
-	"howett.net/plist"
 	"github.com/satori/go.uuid"
+	"howett.net/plist"
 )
 
 var (
-	tempFile             = "./config_temp.mobileConfig"
-	filename             = "./wireguard.mobileConfig"
-	identifierTemplate   = "com.%s.wireguard.locksmith.%s"
-	plIdTemp = "com.%s.wireguard.%s"
-	badEncoding          = "&#x[1-9A-Z];"
+	tempFile           = "./config_temp.mobileConfig"
+	filename           = "./wireguard.mobileConfig"
+	identifierTemplate = "com.%s.wireguard.locksmith.%s"
+	plIdTempl          = "com.%s.wireguard.%s"
+	badEncoding        = "&#x[1-9A-Z];"
 )
 
 // vendorConfig represents a mobileConfig vendor configuration.
@@ -56,44 +55,18 @@ type MobileConfig struct {
 
 // MacConfig represents a MacOS X WireGuard configuration.
 type MacConfig struct {
-	Config      []byte
-	data        MobileConfig
-	vpn         VpnConfig
-	vendor      VendorConfig
-	payload     PayloadContent
-	config      MobileConfig
-	org         string
+	Config     []byte
+	data       MobileConfig
+	vpn        VpnConfig
+	vendor     VendorConfig
+	payload    PayloadContent
+	org        string
 	tunnelName string
 }
 
 // NewConfig creates a new WireGuard mobile configuration.
 func NewConfig() *MacConfig {
 	return new(MacConfig)
-}
-
-// RecompileMobileConfig inserts all the data into the MacConfig data 
-// structures
-func (m *MacConfig) RecompileMobileConfig() {
-
-	configTemplate := MobileConfig {
-		PayloadDisplayName: "Tunnel",
-		PayloadType:        "Configuration",
-		PayloadVersion:     1,
-		PayloadIdentifier:  "",
-		PayloadUUID:        "",
-		PayloadContent:     defaultPayload,
-	}
-	m.config = configTemplate
-	wgTunnelConfig, err := plist.Marshal(configTemplate, plist.XMLFormat)
-	if err != nil {
-		return MacConfig{}
-	}
-
-	newMacConfig := MacConfig {
-		localDevice: newDevice,
-		tunnel:      wgTunnelConfig,
-		data:        configTemplate,
-	}
 }
 
 // SetOrg sets the name of the MacConfig organization.
@@ -103,14 +76,14 @@ func (m *MacConfig) SetOrg(orgName string) {
 
 // UpdateVendorConfig resets the information in the VendorConfig.
 func (m *MacConfig) UpdateVendorConfig() {
-	vc := VendorConfig {
+	vc := VendorConfig{
 		WgQuickConfig: string(m.Config),
 	}
 	m.vendor = vc
 }
 
 // UpdateVpnConfig updates the vpn config for the MacConfig.
-func (m *MacConfig) UpdateVpnConfig() {
+func (m *MacConfig) UpdateVpnConfig(newAddr string) {
 	vc := VpnConfig{
 		RemoteAddress:        newAddr,
 		AuthenticationMethod: "Password",
@@ -119,18 +92,15 @@ func (m *MacConfig) UpdateVpnConfig() {
 }
 
 // UpdatePayload updates the payload data for the struture
-func (m *MacConfig) UpdatePayload() error {
+func (m *MacConfig) UpdatePayload() {
 	i := fmt.Sprintf(plIdTempl, m.org, m.tunnelName)
-	id, err = CreateUUID()
-	if err != nil {
-		return err
-	}
-	p := PayloadContent {
+	id := uuid.NewV4() 
+	p := PayloadContent{
 		PayloadDisplayName: "VPN",
 		PayloadType:        "com.apple.vpn.managed",
 		PayloadVersion:     1,
 		PayloadIdentifier:  i,
-		PayloadUUID:        id,
+		PayloadUUID:        id.String(),
 		UserDefinedName:    m.tunnelName,
 		VPNType:            "VPN",
 		VPNSubType:         "com.wireguard.macos",
@@ -138,35 +108,33 @@ func (m *MacConfig) UpdatePayload() error {
 		VPN:                m.vpn,
 	}
 	m.payload = p
-	return nil
 }
 
 // UpdateMobileConfig updates the mobileConfig plist stored in the
 // MacConfig.
-func (m *MacConfig) UpdateMobileConfig() error {
-	id1, err := CreateUUID()
-	if err != nil {
-		return err
-	}
-	id2, err := CreateUUID()
-	if err != nil {
-		return err
-	}
-	configIdentifier := fmt.Sprintf(plIdentifierTemplate, m.org, id1)
+func (m *MacConfig) UpdateMobileConfig() {
+	id1 := uuid.NewV4()
+	id2 := uuid.NewV4()
+	configIdentifier := fmt.Sprintf(plIdTempl, m.org, id1.String())
 	c := MobileConfig{
 		PayloadDisplayName: "Tunnel",
 		PayloadType:        "Configuration",
 		PayloadVersion:     1,
 		PayloadIdentifier:  configIdentifier,
-		PayloadUUID:        id2,
+		PayloadUUID:        id2.String(),
 		PayloadContent:     m.payload,
 	}
 	m.data = c
-	return nil
 }
 
 // InstallConfig installs the tunnel configuration onto the Mac.
 func (m *MacConfig) InstallConfig() error {
+	
+	plist, err := plist.MarshalIndent(m.data, plist.XMLFormat, "\t")
+	if err != nil {
+		return err
+	}
+	fmt.Print(string(plist))
 
 	// TODO: Install Config without shell commands if possible
 
@@ -246,13 +214,4 @@ func removeBadCharacters(inFile, outFile string) error {
 func RemoveLocalFiles() {
 	_ = os.Remove(tempFile)
 	_ = os.Remove(filename)
-}
-
-// CreateUUID returns a string UUID or an error.
-func CreateUUID() (string, error) {
-	id, err := uuid.NewV4()
-	if err != nil {
-		return "", err
-	}
-	return id, nil
 }
