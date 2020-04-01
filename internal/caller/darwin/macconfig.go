@@ -14,22 +14,22 @@ var (
 	tempFile           = "./config_temp.mobileConfig"
 	filename           = "./wireguard.mobileConfig"
 	identifierTemplate = "com.%s.wireguard.locksmith.%s"
-	plIdTempl          = "com.%s.wireguard.%s"
+	plIDTempl          = "com.%s.wireguard.%s"
 	badEncoding        = "&#x[1-9A-Z];"
 )
 
-// vendorConfig represents a mobileConfig vendor configuration.
+// VendorConfig represents a mobileConfig vendor configuration.
 type VendorConfig struct {
 	WgQuickConfig string
 }
 
-// vpnConfig represents a mobileconfig VPN configuration.
+// VpnConfig represents a mobileconfig VPN configuration.
 type VpnConfig struct {
 	RemoteAddress        string
 	AuthenticationMethod string
 }
 
-// payloadContent represents a mobileConfig payload.
+// PayloadContent represents a mobileConfig payload.
 type PayloadContent struct {
 	PayloadDisplayName string
 	PayloadType        string
@@ -43,7 +43,7 @@ type PayloadContent struct {
 	VPN                VpnConfig
 }
 
-// mobileConfig represents a WireGuard tunnel mobile configuration.
+// MobileConfig represents a WireGuard tunnel mobile configuration.
 type MobileConfig struct {
 	PayloadDisplayName string
 	PayloadType        string
@@ -93,7 +93,7 @@ func (m *MacConfig) UpdateVpnConfig(newAddr string) {
 
 // UpdatePayload updates the payload data for the struture
 func (m *MacConfig) UpdatePayload() {
-	i := fmt.Sprintf(plIdTempl, m.org, m.tunnelName)
+	i := fmt.Sprintf(plIDTempl, m.org, m.tunnelName)
 	id := uuid.NewV4() 
 	p := PayloadContent{
 		PayloadDisplayName: "VPN",
@@ -115,7 +115,7 @@ func (m *MacConfig) UpdatePayload() {
 func (m *MacConfig) UpdateMobileConfig() {
 	id1 := uuid.NewV4()
 	id2 := uuid.NewV4()
-	configIdentifier := fmt.Sprintf(plIdTempl, m.org, id1.String())
+	configIdentifier := fmt.Sprintf(plIDTempl, m.org, id1.String())
 	c := MobileConfig{
 		PayloadDisplayName: "Tunnel",
 		PayloadType:        "Configuration",
