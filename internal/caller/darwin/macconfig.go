@@ -115,12 +115,12 @@ func (m *MacConfig) UpdatePayload() {
 func (m *MacConfig) UpdateMobileConfig() {
 	id1 := uuid.NewV4()
 	id2 := uuid.NewV4()
-	configIdentifier := fmt.Sprintf(plIDTempl, m.org, id1.String())
+	cIdentifier := fmt.Sprintf(plIDTempl, m.org, id1.String())
 	c := MobileConfig{
 		PayloadDisplayName: "Tunnel",
 		PayloadType:        "Configuration",
 		PayloadVersion:     1,
-		PayloadIdentifier:  configIdentifier,
+		PayloadIdentifier:  cIdentifier,
 		PayloadUUID:        id2.String(),
 		PayloadContent:     m.payload,
 	}
@@ -185,19 +185,17 @@ func removeBadCharacters(inFile, outFile string) error {
 	defer f.Close()
 
 	// Open final config file
-	nf, err := os.OpenFile(outFile,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-		0600)
+	nf, err := os.OpenFile(outFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
 
 	defer nf.Close()
 
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
+	s := bufio.NewScanner(f)
+	for s.Scan() {
 		newlineByte := []byte("\n")
-		nextLine := []byte(scanner.Text())
+		nextLine := []byte(s.Text())
 		regScan := garbage.ReplaceAll(nextLine, newlineByte)
 		_, err = nf.Write(regScan)
 
