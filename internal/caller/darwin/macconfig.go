@@ -13,7 +13,6 @@ import (
 var (
 	tempFile           = "./config_temp.mobileConfig"
 	filename           = "./wireguard.mobileConfig"
-	identifierTemplate = "com.%s.wireguard.locksmith.%s"
 	plIDTempl          = "com.%s.wireguard.%s"
 	badEncoding        = "&#x[1-9A-Z];"
 )
