@@ -3,14 +3,15 @@ package ctl
 import (
     "bufio"
 	"fmt"
-    "io"
     "os"
+
+    "github.com/the-maldridge/locksmith/internal/models"
 
 	"github.com/spf13/cobra"
 )
 
 const (
-    confPath = "./locksmith.conf"
+    confPath = "~/.locksmith.conf"
 )
 
 var setupCmd = &cobra.Command{
@@ -21,12 +22,6 @@ var setupCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
         createProfile()
 	},
-}
-
-type Profile struct {
-    Name string
-    Tunnel string
-    Server string
 }
 
 func init() {
@@ -43,7 +38,7 @@ func createProfile() error {
     }
     defer f.Close()
 
-    profile := Profile{}
+    profile := models.NewProfile()
     scanner := bufio.NewScanner(os.Stdin)
 
     // collect information
@@ -54,21 +49,5 @@ func createProfile() error {
     fmt.Print("Enter the locksmith server IP: ")
     scanner.Scan()
     profile.Server = scanner.Text()
-
-    fmt.Print("Enter the locksmith tunnel: ")
-    scanner.Scan()
-    profile.Tunnel = scanner.Text()
-
-    // write information to conf
-    if _, err = io.WriteString(f, profile.Name + "\n"); err != nil {
-        return err
-    }
-    if _, err = io.WriteString(f, profile.Server + "\n"); err != nil {
-        return err
-    }
-    if _, err = io.WriteString(f, profile.Tunnel + "\n"); err != nil {
-        return err
-    }
-
     return nil
 }
