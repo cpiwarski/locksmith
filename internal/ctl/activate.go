@@ -5,16 +5,10 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/the-maldridge/locksmith/internal/models"
-
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 const (
-	installPath = "~/.locksmith"
-	configName  = ".env"
-	configPath  = "."
 	configType  = "yaml"
 )
 
@@ -31,7 +25,7 @@ Endpoint = {{.Endpoint}}
 `
 )
 
-var activateCmd = &cobra.Command{
+var activateCmd = &cobra.Command {
 	Use:     "activate",
 	Short:   "Enable a locksmith profile",
 	Long:    `Enable the supplied locksmith profile.`,
@@ -45,38 +39,12 @@ func init() {
 	rootCmd.AddCommand(activateCmd)
 }
 
-func viperInit() {
-	viper.SetConfigName(configName)
-	viper.SetConfigType(configType)
-	viper.AddConfigPath(configPath)
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("Viper Config Failure")
-		fmt.Println(err)
-		return
-	}
-	return
-}
-
-func tunnelInit() *models.Profile {
-	profile := &models.Profile{
-		PrivateKey: viper.GetString("uPrivateKey"),
-		Address:    viper.GetString("address"),
-		Pubkey:     viper.GetString("publicKey"),
-		AllowedIPs: viper.GetString("allowedIPs"),
-		Endpoint:   viper.GetString("endpoint"),
-	}
-	return profile
-}
-
 // activate executes all tasks associated with activating a locksmith profile
 func activate() {
-	viperInit()
-	tunnelSt := tunnelInit()
 
-	f, err := os.Create(installPath)
+	f, err := os.Create(configPath)
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	_ = tmpl.Execute(f, tunnelSt)
+    defer f.Close()
 }
