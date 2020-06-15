@@ -46,5 +46,6 @@ func activate() {
 	if err != nil {
 		fmt.Println(err)
 	}
+    f.WriteString("HEH")
     defer f.Close()
 }

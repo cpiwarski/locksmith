@@ -1,5 +1,5 @@
 package ctl
 
 const (
-    configPath = "~/.locksmith"
+    configPath = "/home/chris-bh/.locksmith"
 )
